@@ -1,3 +1,4 @@
+- Download pgAdmin 4: https://www.pgadmin.org/download/pgadmin-4-windows/
 - Create database
 - Access postgresql: psql -U postgres
 - Sql create databse:
@@ -10,4 +11,4 @@ CREATE DATABASE "DemoTest"
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;
 
-    
+
