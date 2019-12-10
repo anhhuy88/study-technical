@@ -12,3 +12,6 @@ CREATE DATABASE "DemoTest"
     CONNECTION LIMIT = -1;
 
 
+- Run postgres on dockerhub
+    + docker run -p 5432:5432 -it postgres:10.11 /bin/bash
+    + docker run --name demo_postgresql -e POSTGRES_PASSWORD=123 -d -p 5432:5432 postgres:10.11

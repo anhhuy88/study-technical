@@ -19,18 +19,29 @@
         * chọn version: apt-cache madison docker-ce
             > sudo apt-get install docker-ce="18.03.1~ce~3-0~ubuntu" docker-ce-cli="18.03.1~ce~3-0~ubuntu" containerd.io
     + sudo systemctl status docker
+    
 # Commands
 
-- Liệt kê Image: 
-    + Xóa 1: docker image ls
+- List Image: docker image ls
 - Xóa image: 
     + docker rmi -f [imageId]
-    + Xóa nhiều: docker rmi $(docker images -q) -f
-- Liệt kê container: docker container ls
-- Xóa nhiều container:
+    + sudo docker rmi -f $(sudo docker image ls)
+- Restart docker: sudo service docker restart
+- List container: 
+    + docker container ls
+    + docker ps -a
+- Remove container:
     + docker rm $(docker ps -a -q)
-
-- Run postgres on dockerhub
-    + docker run -p 5432:5432 -it postgres:10.11 /bin/bash
-    + docker run --name demo_postgresql -e POSTGRES_PASSWORD=123 -d -p 5432:5432 postgres:10.11
+    + docker rm [containerId] -f
+- Clear volume
+    + docker volume rm $(docker volume ls -q)
+- Clear networks
+    + docker network rm $(docker network ls | tail -n+2 | awk '{if($2 !~ /bridge|none|host/){ print $1 }}')
+    + sudo docker network rm $(sudo docker network ls | tail -n+2 | awk '{if($2 !~ /bridge|none|host/){ print $1 }}')
 - Access container: docker exec -it [ConatinerId] bash
+
+----------------------------------------------------------------
+Errors:
+- Docker & Postgres: Failed to bind tcp 0.0.0.0:5432 address already in use
+    + sudo lsof -i :5432
+    + sudo kill [PID]
