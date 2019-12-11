@@ -21,7 +21,7 @@
     + sudo systemctl status docker
     
 # Commands
-
+- Build image: docker build -t image_netcorelinux
 - List Image: docker image ls
 - Xóa image: 
     + docker rmi -f [imageId]
@@ -45,3 +45,6 @@ Errors:
 - Docker & Postgres: Failed to bind tcp 0.0.0.0:5432 address already in use
     + sudo lsof -i :5432
     + sudo kill [PID]
+
+## References
+- https://docs.docker.com/engine/reference/builder/

@@ -2,7 +2,7 @@
 - Create database
 - Access postgresql: psql -U postgres
 - Sql create databse:
-CREATE DATABASE "DemoTest"
+CREATE DATABASE "DemoTestXX"
     WITH 
     OWNER = postgres
     ENCODING = 'UTF8'
