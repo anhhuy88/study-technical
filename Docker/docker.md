@@ -25,7 +25,7 @@
 - List Image: docker image ls
 - Xóa image: 
     + docker rmi -f [imageId]
-    + sudo docker rmi -f $(sudo docker image ls)
+    + docker rmi -f $(docker images -a -q)
 - Restart docker: sudo service docker restart
 - List container: 
     + docker container ls

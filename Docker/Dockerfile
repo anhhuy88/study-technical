@@ -15,12 +15,14 @@
 # CMD ["/usr/lib/postgresql/10/bin/postgres", "-D", "/var/lib/postgresql/10/main", "-c", "config_file=/etc/postgresql/10/main/postgresql.conf"]
 
 FROM ubuntu:16.04
-RUN echo "apt-get install -y gpg"
-RUN echo "wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o microsoft.asc.gpg"
-RUN echo "mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/"
-RUN echo "wget -q https://packages.microsoft.com/config/ubuntu/16.04/prod.list"
-RUN echo "mv prod.list /etc/apt/sources.list.d/microsoft-prod.list"
-RUN echo "chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg"
-RUN echo "chown root:root /etc/apt/sources.list.d/microsoft-prod.list"
-RUN apt-get update && apt-get install -y apt-transport-https dotnet-sdk-2.1 aspnetcore-runtime-2.1 dotnet-runtime-2.1
+RUN apt-get update \
+    && apt-get install -y wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-get update && apt-get install -y apt-transport-https
+
+RUN dpkg -i packages-microsoft-prod.deb
+RUN add-apt-repository universe
+RUN apt-get update && apt-get install -y dotnet-sdk-3.1 aspnetcore-runtime-3.1 dotnet-runtime-3.1
 CMD [ "dotnet", "--version" ]
