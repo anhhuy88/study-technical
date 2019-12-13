@@ -10,7 +10,7 @@
     + Install: netcore, ngix
 - How to connect between container...
 
-------------------------------------------------------------------------------------------------
+# ----------------------------------------  scenarios --------------------------------------------------------
 - scenario 1: Run app in docker
     1. Create mvc app .net core
     2. Build image ubuntu
@@ -31,5 +31,14 @@
     3. Donwload file from FTP
 
 
+# ------------------------------------------- BUILD .net core on ubuntu ---------------------------------------------------
+
+1. Install nginx: https://www.rosehosting.com/blog/how-to-install-nginx-on-ubuntu-16-04/
+2. Sources app
+3. Config: sudo vim /etc/nginx/sites-available/default
+4. Create file service: sudo vim /etc/systemd/system/[nameservice].service
+    + sudo systemctl enable [nameservice].service
+    + sudo systemctl start [nameservice].service
+    + sudo systemctl status [nameservice].service
 
 
