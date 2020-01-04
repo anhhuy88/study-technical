@@ -1,4 +1,5 @@
 - Download pgAdmin 4: https://www.pgadmin.org/download/pgadmin-4-windows/
+https://o7planning.org/vi/11325/huong-dan-cai-dat-va-cau-hinh-postgresql-database-tren-ubuntu
 - Create database
 - Access postgresql: psql -U postgres
 - Sql create databse:
@@ -15,3 +16,5 @@ CREATE DATABASE "DemoTestXX"
 - Run postgres on dockerhub
     + docker run -p 5432:5432 -it postgres:10.11 /bin/bash
     + docker run --name demo_postgresql -e POSTGRES_PASSWORD=123 -d -p 5432:5432 postgres:10.11
+    
+    
