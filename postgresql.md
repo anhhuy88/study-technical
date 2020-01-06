@@ -18,3 +18,10 @@ CREATE DATABASE "DemoTestXX"
     + docker run --name demo_postgresql -e POSTGRES_PASSWORD=123 -d -p 5432:5432 postgres:10.11
     
     
+# Remote to VM
+1. Install postgresql
+2. Change file /etc/postgresql/10/main/pg_hba.conf
+    + "host all all 10.0.2.1/24 md5" => "host all all 0.0.0.0/0 trust"
+3. Change file: /etc/postgresql/10/main/postgresql.conf
+    + remove comment: listen_addresses = '*'
+4. run: sudo systemctl restart postgresql
