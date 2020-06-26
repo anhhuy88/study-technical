@@ -29,5 +29,5 @@
 - reboot
 7. sudo mount -t vboxsf [name folder share] [path on ubuntu machine]
 8. set auto amount: echo "sudo mount -t vboxsf [name folder share] [path on ubuntu machine]" >> /home/myusername/.profile
-references: (Share folder between windows host and ubuntu guest machine)[https://stackoverflow.com/questions/54336626/how-to-create-virtualbox-shared-folder-between-windows-host-and-ubuntu18-04-gues]
+- References: [Share folder between windows host and ubuntu guest machine](https://stackoverflow.com/questions/54336626/how-to-create-virtualbox-shared-folder-between-windows-host-and-ubuntu18-04-gues)
 
