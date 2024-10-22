@@ -7,8 +7,10 @@
  - sudo ufw allow ssh
  - sudo ufw enable
  - sudo ufw status
+
 # commands
 - Permission: sudo -i
+
 ## Firewall
 - sudo ufw allow [port]
 - sudo ufw deny [port]
@@ -17,6 +19,13 @@
 - sudo ufw reset
 - Liệt kê các cổng: lsoft -i -P -n
 - xóa cổng: kill [PID]
+
+# Triển khai .net core app
+
+# Cài đặt Nginx
+
+# Cài đặt SSL cho Website
+
 # Share folder between windows host and ubuntu guest machine
 1. Select ubuntu VM on Virtualbox
 3. Click **Setting** button
@@ -31,3 +40,6 @@
 8. set auto amount: echo "sudo mount -t vboxsf [name folder share] [path on ubuntu machine]" >> /home/myusername/.profile
 - References: [Share folder between windows host and ubuntu guest machine](https://stackoverflow.com/questions/54336626/how-to-create-virtualbox-shared-folder-between-windows-host-and-ubuntu18-04-gues)
 
+# Tài liệu tham khảo
+- https://viblo.asia/p/tim-hieu-va-huong-dan-setup-web-server-nginx-OREGwBwlvlN
+- 
