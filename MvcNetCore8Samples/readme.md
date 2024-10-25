@@ -1,3 +1,8 @@
+<!--TOC-->
+- [Using barcode](#using-barcode)
+- [Using serilog](#using-serilog)
+<!--/TOC-->
+
 # Using barcode
 - Package ZXing.Net
 ``` XML
