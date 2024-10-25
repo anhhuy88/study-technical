@@ -1,10 +1,18 @@
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
+# Using barcode
+- Package ZXing.Net
+``` XML
+<PackageReference Include="ZXing.Net.Bindings.ZKWeb.System.Drawing" Version="0.16.7" />
+```
+- Implement: BaCodeController.Generation
+
+# Using serilog
+
+- Package Serilog
+``` XML
+<PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
+```
+- Appsettings
+``` JSON
   "Serilog": {
     "Using": [ "Serilog.Sinks.File", "Serilog.Sinks.Console" ],
     "MinimumLevel": {
@@ -30,6 +38,10 @@
       }
     ],
     "Enrich": [ "FromLogContext", "WithThreadId", "WithMachineName" ]
-  },
-  "AllowedHosts": "*"
-}
+  }
+```
+
+- program.cs
+``` C#
+builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration));
+```

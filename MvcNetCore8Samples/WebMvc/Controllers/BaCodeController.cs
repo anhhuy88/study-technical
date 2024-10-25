@@ -14,6 +14,8 @@ public class BaCodeController : Controller
 
     public IActionResult Generation(string id)
     {
+        _logger.LogInformation($"Generating barcode for {id}");
+
         var barcode = new BarcodeWriter()
         {
             Format = ZXing.BarcodeFormat.CODE_128,
