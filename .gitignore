@@ -4,3 +4,4 @@ obj
 *.map
 *.csproj.user
 *.suo
+logs/

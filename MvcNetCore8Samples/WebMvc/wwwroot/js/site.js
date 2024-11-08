@@ -1,4 +1,42 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿$(function () {
+    $('#drawer').dxDrawer({
+        position: 'before',
+        revealMode: 'expand',
+        minSize: 0,
+        shading: false,
+        opened: true,
+        closeOnOutsideClick: false,
+        openedStateMode: 'shrink'
+    });
 
-// Write your JavaScript code.
+    $('#menu-item').dxTreeView({
+        selectionMode: 'single',
+        focusStateEnabled: false,
+        expandEvent: 'click',
+        width: '100%',
+        keyExpr: 'path',
+        onItemClick: function (e) { }
+    });
+
+    $('#header-toolbox').dxToolbar({
+        items: [
+            {
+                location: 'before',
+                widget: 'dxButton',
+                stylingMode: 'text',
+                options: {
+                    icon: 'menu',
+                    onClick: function () {
+                        var drawer = $('#drawer').dxDrawer('instance');
+                        drawer.toggle();
+                    }
+                }
+            },
+            {
+                location: 'center',
+                text: 'WebMvc'
+            }
+        ]
+    });
+
+});

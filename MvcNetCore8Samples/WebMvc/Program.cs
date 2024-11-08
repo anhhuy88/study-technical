@@ -5,7 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration));
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddMvc()
+    .AddApplicationPart(typeof(WebMvcLib.Areas.Admin.Controllers.HomeController).Assembly);
 
 var app = builder.Build();
 
@@ -24,8 +25,8 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "areaRoute", pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+//app.MapAreaControllerRoute(name: "admin-default", areaName: "Admin", pattern: "/Admin/{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

@@ -19,4 +19,8 @@
     <None Remove="Logs\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\WebMvcLib\WebMvcLib.csproj" />
+  </ItemGroup>
+
 </Project>

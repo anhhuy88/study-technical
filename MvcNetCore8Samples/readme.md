@@ -1,6 +1,7 @@
-<!--TOC-->
+﻿<!--TOC-->
 - [Using barcode](#using-barcode)
 - [Using serilog](#using-serilog)
+- [Create Area in library project](#create-area-in-library-project)
 <!--/TOC-->
 
 # Using barcode
@@ -49,4 +50,27 @@
 - program.cs
 ``` C#
 builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration));
+```
+
+# Create Area in library project
+- Create new project Razor Class Library
+- Go to the .csproj file and then modify it as follows.:
+  + **Sdk="Microsoft.NET.Sdk.Razor"**
+  + **AddRazorSupportForMvc: true**
+  + **FrameworkReference inclue: Microsoft.AspNetCore.App**
+``` XML
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
+
 ```
