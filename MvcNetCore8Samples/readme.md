@@ -2,6 +2,7 @@
 - [Using barcode](#using-barcode)
 - [Using serilog](#using-serilog)
 - [Create Area in library project](#create-area-in-library-project)
+- [using admin theme](#using-admin-theme)
 <!--/TOC-->
 
 # Using barcode
@@ -74,3 +75,6 @@ builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfigura
 </Project>
 
 ```
+
+# using admin theme
+- https://github.com/themekita/Atlantis-Lite?tab=readme-ov-file
