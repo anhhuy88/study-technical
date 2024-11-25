@@ -33,5 +33,11 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ChildItems_ParentItems");
         });
+
+        modelBuilder.Entity<FileData>(entity =>
+        {
+            entity.ToTable($"{nameof(FileData)}s");
+            entity.HasKey(e => e.Id);
+        });
     }
 }
