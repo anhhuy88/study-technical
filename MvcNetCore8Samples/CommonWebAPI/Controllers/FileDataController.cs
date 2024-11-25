@@ -9,10 +9,13 @@ namespace CommonWebAPI.Controllers;
 public class FileDataController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly ILogger _logger;
 
-    public FileDataController(AppDbContext dbContext)
+    public FileDataController(AppDbContext dbContext,
+        ILoggerFactory loggerFactory)
     {
         _dbContext = dbContext;
+        _logger = loggerFactory.CreateLogger<FileDataController>();
     }
 
     [HttpPost("upload")]
@@ -26,7 +29,7 @@ public class FileDataController : ControllerBase
         var form = await Request.ReadFormAsync();
         var files = form.Files;
         var fileDataRes = _dbContext.Set<FileData>();
-        var hostData = $"{Request.Scheme}://{Request.Host}";
+        var hostData = $"https://{Request.Host}";
         var fileIds = new List<string>();
 
         // check file max 2MB
@@ -34,8 +37,16 @@ public class FileDataController : ControllerBase
         var isInvalid = files.Any(f => f.Length > maxFileSize);
         if (isInvalid)
         {
+            _logger.LogInformation("File size is too large (2MB).");
             return BadRequest("File size is too large (2MB).");
         }
+
+        if (files.Where(f => f.Length == 0).Any())
+        {
+            _logger.LogInformation("File size is 0.");
+            return BadRequest("File size is 0.");
+        }
+
         var provider = new FileExtensionContentTypeProvider();
         string contentType;
         foreach (var file in files)
@@ -52,7 +63,7 @@ public class FileDataController : ControllerBase
                 Size = file.Length,
                 CreatedDate = DateTime.Now
             };
-            
+
             fileData.Data = await file.ToByteArrayAsync();
 
             await fileDataRes.AddAsync(fileData);
