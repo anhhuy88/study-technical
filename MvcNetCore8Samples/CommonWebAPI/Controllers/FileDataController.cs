@@ -1,7 +1,7 @@
 ﻿using CommonWebAPI.Domain;
 using CommonWebAPI.Extensions;
+using CommonWebAPI.Interfaces;
 using CommonWebAPI.Models;
-using ImageMagick;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
@@ -11,11 +11,16 @@ namespace CommonWebAPI.Controllers;
 public class FileDataController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+
     private readonly ILogger _logger;
 
+    private readonly IUploadService _uploadService;
+
     public FileDataController(AppDbContext dbContext,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        IUploadService uploadService)
     {
+        _uploadService = uploadService;
         _dbContext = dbContext;
         _logger = loggerFactory.CreateLogger<FileDataController>();
     }
@@ -94,53 +99,13 @@ public class FileDataController : ControllerBase
     [HttpPost("upload2")]
     public async Task<IActionResult> Upload2Async([FromBody] FileDataModel model)
     {
-        var hostData = $"https://{Request.Host}";
-        var contentType = model.ContentType;
-        uint maxW = 1024;
-        uint maxH = 1024;
-        byte[] bytes = null;
-        //var bytes = Convert.FromBase64String(model.Base64Data);
-        //using var ms = new MemoryStream(bytes);
-        //using var image = FreeImageBitmap.FromStream(ms);
-        //var w = image.Width;
-        //var h = image.Height;
+        var linkUrl = await _uploadService.SaveFileDataAsync(model);
 
-        //if (w > maxW || h > maxH)
-        //{
-        //    var ratio = Math.Min(maxW / (double)w, maxH / (double)h);
-        //    w = (int)(w * ratio);
-        //    h = (int)(h * ratio);
-        //    image.Rescale(w, h, FREE_IMAGE_FILTER.FILTER_BICUBIC);
-        //    using var ms2 = new MemoryStream();
-        //    image.Save(ms2, FREE_IMAGE_FORMAT.FIF_JPEG, FREE_IMAGE_SAVE_FLAGS.JPEG_QUALITYNORMAL);
-        //    bytes = ms2.ToArray();
-        //    contentType = "image/jpeg";
-        //}
-
-        // for using ImageMagick
-        using var image = MagickImage.FromBase64(model.Base64Data);
-        if (image.Width > maxW || image.Height > maxH)
+        if (!linkUrl.StartsWith("http"))
         {
-            image.Resize(maxW, maxH);
+            var hostData = $"https://{Request.Host}";
+            linkUrl = $"{hostData}/api/filedata/download/{linkUrl}";
         }
-
-        bytes = image.ToByteArray();
-
-        var fileData = new FileData
-        {
-            Id = Guid.NewGuid().ToString(),
-            FileName = model.FileName,
-            ContentType = contentType,
-            Size = bytes.Length,
-            CreatedDate = DateTime.Now,
-            Data = bytes
-        };
-
-        await _dbContext.Set<FileData>().AddAsync(fileData);
-
-        await _dbContext.SaveChangesAsync();
-
-        var linkUrl = $"{hostData}/api/filedata/download/{fileData.Id}";
         return Ok(linkUrl);
     }
 
