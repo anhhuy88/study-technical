@@ -7,3 +7,5 @@ obj
 logs/
 .config/
 *.user
+.db-shm
+.db-wal
