@@ -28,7 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DemoAlantisTheme\DemoAlantisTheme.csproj" />
     <ProjectReference Include="..\WebMvcLib\WebMvcLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\alantis-theme\" />
   </ItemGroup>
 
 </Project>

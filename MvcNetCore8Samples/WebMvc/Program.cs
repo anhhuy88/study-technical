@@ -22,6 +22,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 // Add services to the container.
 builder.Services.AddMvc()
     .AddApplicationPart(typeof(WebMvcLib.Areas.Admin.Controllers.HomeController).Assembly)
+    .AddApplicationPart(typeof(DemoAlantisTheme.Areas.Customer.Controllers.HomeController).Assembly)
     .AddNewtonsoftJson(opts =>
     {
         opts.SerializerSettings.ContractResolver = new DefaultContractResolver();
@@ -29,11 +30,11 @@ builder.Services.AddMvc()
 
 var app = builder.Build();
 
-// Migrate database
-using var scope = app.Services.CreateScope();
-var services = scope.ServiceProvider;
-var context = services.GetRequiredService<AppDbContext>();
-await context.Database.MigrateAsync();
+//// Migrate database
+//using var scope = app.Services.CreateScope();
+//var services = scope.ServiceProvider;
+//var context = services.GetRequiredService<AppDbContext>();
+//await context.Database.MigrateAsync();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
