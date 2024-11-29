@@ -31,8 +31,4 @@
     </Content>
     <Content Update="Logs\**" CopyToPublishDirectory="Never" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
 </Project>

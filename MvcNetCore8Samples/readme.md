@@ -1,9 +1,16 @@
 ﻿<!--TOC-->
+- [Versions DB](#versions-db)
 - [Using barcode](#using-barcode)
 - [Using serilog](#using-serilog)
 - [Create Area in library project](#create-area-in-library-project)
 - [using admin theme](#using-admin-theme)
 <!--/TOC-->
+
+# Versions DB
+- Ver_01: Initial version
+    + dotnet ef migrations add Ver_01
+    + scripts: dotnet ef migrations script Ver_01 -o Scripts/Ver_01.sql
+    + dotnet ef database update
 
 # Using barcode
 - Package ZXing.Net
