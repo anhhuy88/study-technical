@@ -28,17 +28,7 @@ public class UploadService : IUploadService
     private async Task<string> SaveToDbAsync(FileDataModel model)
     {
         var contentType = model.ContentType;
-        uint maxW = 1024;
-        uint maxH = 1024;
-        byte[] bytes = null;
-        // for using ImageMagick
-        using var image = MagickImage.FromBase64(model.Base64Data);
-        if (image.Width > maxW || image.Height > maxH)
-        {
-            image.Resize(maxW, maxH);
-        }
-
-        bytes = image.ToByteArray();
+        byte[] bytes = model.ToImageBytes();
 
         var fileData = new FileData
         {
@@ -90,6 +80,9 @@ public class UploadService : IUploadService
 
     public async Task<string> SaveFileDataAsync(FileDataModel model)
     {
+        uint maxW = 1024;
+        uint maxH = 1024;
+        model.Base64Data = model.ToResizeBase64Image(maxW, maxH);
         string result = await UploadImgBBAsync(model);
 
         if (string.IsNullOrEmpty(result))
