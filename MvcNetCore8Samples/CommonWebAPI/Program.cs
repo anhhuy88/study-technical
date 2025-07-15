@@ -17,6 +17,7 @@ if (!Directory.Exists(dataFolder))
 var dataFile = Path.Combine(dataFolder, "appData.db"); // Directory.GetCurrentDirectory()
 
 builder.Services.AddHttpClient(VARIABLES.HTTP_CLIENT_NAME);
+builder.Services.AddHttpClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME);
 
 builder.Services.AddDbContext<AppDbContext>(opts => opts.UseSqlite($"Filename={dataFile}"));
 

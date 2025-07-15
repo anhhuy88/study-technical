@@ -16,13 +16,17 @@ public class FileDataController : ControllerBase
 
     private readonly IUploadService _uploadService;
 
+    private readonly IHttpClientFactory _httpClientFactory;
+
     public FileDataController(AppDbContext dbContext,
         ILoggerFactory loggerFactory,
-        IUploadService uploadService)
+        IUploadService uploadService,
+        IHttpClientFactory httpClientFactory)
     {
         _uploadService = uploadService;
         _dbContext = dbContext;
         _logger = loggerFactory.CreateLogger<FileDataController>();
+        _httpClientFactory = httpClientFactory;
     }
 
     [HttpPost("upload")]
@@ -107,6 +111,29 @@ public class FileDataController : ControllerBase
             linkUrl = $"{hostData}/api/filedata/download/{linkUrl}";
         }
         return Ok(linkUrl);
+    }
+
+    [HttpGet("image/{base64Data}")]
+    public async Task<IActionResult> GetImageAsync(string base64Data)
+    {
+        // javascript:var test = unescape(encodeURIComponent(data)); base64Data = btoa(test);
+
+        var http = _httpClientFactory.CreateClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME);
+        var imgUrl = base64Data.ToImageUrl();
+        var response = await http.GetAsync(imgUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            return NotFound();
+        }
+        var exension = Path.GetExtension(imgUrl);
+        var name = Path.GetFileNameWithoutExtension(imgUrl);
+        var contentType = new FileExtensionContentTypeProvider().TryGetContentType(exension, out var type) ? type : VARIABLES.APPLICATION_OCTET_STREAM;
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        if (bytes.Length == 0)
+        {
+            return NotFound();
+        }
+        return File(bytes, contentType);
     }
 
 }

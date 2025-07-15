@@ -1,5 +1,6 @@
 ﻿using CommonWebAPI.Models;
 using ImageMagick;
+using System.Text;
 
 namespace CommonWebAPI.Extensions;
 
@@ -36,5 +37,11 @@ public static class CommonExtensions
     {
         using var image = MagickImage.FromBase64(model.Base64Data);
         return image.ToByteArray();
+    }
+
+    public static string ToImageUrl(this string base64Data)
+    {
+        var bytes = Convert.FromBase64String(base64Data);
+        return Encoding.GetEncoding("ISO-8859-1").GetString(bytes);
     }
 }
