@@ -83,10 +83,11 @@ public class UploadService : IUploadService
         uint maxW = 1024;
         uint maxH = 1024;
         model.Base64Data = model.ToResizeBase64Image(maxW, maxH);
-        string result = await UploadImgBBAsync(model);
+        string result = await SaveToDbAsync(model);
+        //string result = await UploadImgBBAsync(model);
 
-        if (string.IsNullOrEmpty(result))
-            result = await SaveToDbAsync(model);
+        //if (string.IsNullOrEmpty(result))
+        //    result = await SaveToDbAsync(model);
 
         return result;
     }

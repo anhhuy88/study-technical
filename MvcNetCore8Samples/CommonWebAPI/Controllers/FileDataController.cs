@@ -119,7 +119,7 @@ public class FileDataController : ControllerBase
         // javascript:var test = unescape(encodeURIComponent(data)); base64Data = btoa(test);
 
         var http = _httpClientFactory.CreateClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME);
-        var imgUrl = base64Data.ToImageUrl();
+        var imgUrl = base64Data.ToDecodeURIComponent().ToImageUrl();
         var response = await http.GetAsync(imgUrl);
         if (!response.IsSuccessStatusCode)
         {
