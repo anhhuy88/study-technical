@@ -73,7 +73,7 @@ sudo netstat -lptu
 + pg_dump -h localhost -U postgres -F c -d demoDb2 > /home/huypv/demoDb2.dump
 + pg_restore -h localhost -U postgres -d demoDb4 /home/huypv/demoDb2.dump --clean
 + dropdb -h localhost -U postgres demoDb4
-+ Cách xóa DB khác: 
++ Cách xóa DB khác (Lưu ý phải đăng nhập mới xóa được DB): 
 	* psql -U postgres -d postgres
 	* SELECT pg_terminate_backend(pg_stat_activity.pid)
 		FROM pg_stat_activity
