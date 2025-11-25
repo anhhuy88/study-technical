@@ -68,9 +68,22 @@ sudo netstat -lptu
 - sudo service postgresql stop
 - The default admin user: postgres
 	+ Change password: sudo passwd postgres
-pg_dump -h localhost -U postgres -F c -d demoDb2 > /home/huypv/demoDb2.dump
-createdb -U postgres -O sa demoDb4
-pg_restore -h localhost -U postgres -d demoDb4 /home/huypv/demoDb2.dump --clean
+-  Backup & restore DB
++ createdb -U postgres -O sa demoDb4
++ pg_dump -h localhost -U postgres -F c -d demoDb2 > /home/huypv/demoDb2.dump
++ pg_restore -h localhost -U postgres -d demoDb4 /home/huypv/demoDb2.dump --clean
+
+- Để remote từ DBeaver bên ngoài cần thiết lập peer -> md5
++ Tệp: sudo nano /etc/postgresql/16/main/pg_hba.conf
+
+- Quy trình đổi mật khẩu cho tài khoản gốc: postgres
++ Go to (Đổi peer thành trust > CTR + O > CTR + X): sudo nano /etc/postgresql/16/main/pg_hba.conf
++ sudo systemctl restart postgresql
++ sudo -u postgres psql
++ ALTER USER postgres WITH PASSWORD 'mat_khau_moi'; \q;
++ Go to (Đổi trust thành md5 > CTR + O > CTR + X): sudo nano /etc/postgresql/16/main/pg_hba.conf
++ sudo systemctl restart postgresql
+
 
 - Reference: https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-database#install-postgresql
 
