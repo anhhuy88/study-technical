@@ -72,6 +72,15 @@ sudo netstat -lptu
 + createdb -U postgres -O sa demoDb4
 + pg_dump -h localhost -U postgres -F c -d demoDb2 > /home/huypv/demoDb2.dump
 + pg_restore -h localhost -U postgres -d demoDb4 /home/huypv/demoDb2.dump --clean
++ dropdb -h localhost -U postgres demoDb4
++ Cách xóa DB khác: 
+	* psql -U postgres -d postgres
+	* SELECT pg_terminate_backend(pg_stat_activity.pid)
+		FROM pg_stat_activity
+		WHERE pg_stat_activity.datname = 'demoDb1'
+		AND pid <> pg_backend_pid();
+	* DROP DATABASE "demoDb1";
+	* Hoặc: DROP DATABASE "demoDb2" WITH (FORCE);
 
 - Để remote từ DBeaver bên ngoài cần thiết lập peer -> md5
 + Tệp: sudo nano /etc/postgresql/16/main/pg_hba.conf
