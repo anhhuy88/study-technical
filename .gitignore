@@ -1,1 +1,11 @@
+bin
+obj
 .vs
+*.map
+*.csproj.user
+*.suo
+logs/
+.config/
+*.user
+.db-shm
+.db-wal

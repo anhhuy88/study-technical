@@ -1,0 +1,19 @@
+html { font-size: 14px; }
+
+@media (min-width: 768px) {
+    html { font-size: 16px; }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus { box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb; }
+
+
+body { margin-bottom: 60px; }
+
+html, body { margin: 0px; }
+html, body, #drawer, #side-menu { min-height: 100%; height: 100%; }
+#side-menu { display: flex; flex-direction: column; background-color: #53565a; width: 250px !important; position: relative; }
+#header-toolbox { flex: 0 0 auto; z-index: 1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24); border-left: 1px solid #4e7a7a; }
+.header-toolbar { background-color: #005598; }
+.header-toolbar .dx-toolbar-items-container .dx-toolbar-after { padding: 0 10px; }
+#header-toolbox.dx-toolbar .dx-toolbar-items-container { height: 55px; }
+#header-toolbox.dx-toolbar .dx-button .dx-icon { font-size: 30px; width: 30px !important; height: 30px !important; }
