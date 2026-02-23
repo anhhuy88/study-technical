@@ -17,7 +17,7 @@ if not defined FNM_AUTORUN_GUARD (
 )
 `
 
-- Run command as bleow to registry editor:
+- Run the command below to open the Registry Editor.:
 
 `
 reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Command Processor" /v AutoRun /t REG_SZ /d "%userprofile%\fnm_init.cmd" /f
