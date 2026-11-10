@@ -4,9 +4,13 @@ using CommonWebAPI.Interfaces;
 using CommonWebAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
+builder.Host.UseSerilog((context, services, loggerConfig) => loggerConfig
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services));
 var dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
 Console.WriteLine($"Data folder: {dataFolder}");
 if (!Directory.Exists(dataFolder))
@@ -17,7 +21,16 @@ if (!Directory.Exists(dataFolder))
 var dataFile = Path.Combine(dataFolder, "appData.db"); // Directory.GetCurrentDirectory()
 
 builder.Services.AddHttpClient(VARIABLES.HTTP_CLIENT_NAME);
-builder.Services.AddHttpClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME);
+builder.Services.AddHttpClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME, client =>
+{
+    // Must stay below the reverse proxy read timeout (nginx default 60s).
+    client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36");
+    client.DefaultRequestHeaders.Accept.ParseAdd("image/avif,image/webp,image/*,*/*;q=0.8");
+});
+
+builder.Services.AddSingleton(new ImageCacheOptions(Path.Combine(dataFolder, "image-cache")));
+builder.Services.AddSingleton<IImageProxyService, ImageProxyService>();
 
 builder.Services.AddDbContext<AppDbContext>(opts => opts.UseSqlite($"Filename={dataFile}"));
 
@@ -45,11 +58,18 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+
 if (builder.Environment.IsDevelopment() == false)
 {
     app.UseHttpsRedirection();
 }
 // Configure the HTTP request pipeline.
+app.UseSerilogRequestLogging();
 app.UseCors("AllowAll");
 
 app.MapControllers();

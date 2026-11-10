@@ -2,6 +2,7 @@
 using CommonWebAPI.Extensions;
 using CommonWebAPI.Interfaces;
 using CommonWebAPI.Models;
+using CommonWebAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
@@ -16,17 +17,17 @@ public class FileDataController : ControllerBase
 
     private readonly IUploadService _uploadService;
 
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IImageProxyService _imageProxy;
 
     public FileDataController(AppDbContext dbContext,
         ILoggerFactory loggerFactory,
         IUploadService uploadService,
-        IHttpClientFactory httpClientFactory)
+        IImageProxyService imageProxy)
     {
         _uploadService = uploadService;
         _dbContext = dbContext;
         _logger = loggerFactory.CreateLogger<FileDataController>();
-        _httpClientFactory = httpClientFactory;
+        _imageProxy = imageProxy;
     }
 
     [HttpPost("upload")]
@@ -119,22 +120,31 @@ public class FileDataController : ControllerBase
     {
         // javascript:var test = unescape(encodeURIComponent(data)); base64Data = btoa(test);
 
-        var http = _httpClientFactory.CreateClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME);
-        var imgUrl = base64Data.ToDecodeURIComponent().ToImageUrl();
-        var response = await http.GetAsync(imgUrl);
-        if (!response.IsSuccessStatusCode)
+        string imgUrl;
+        try
         {
-            return NotFound();
+            imgUrl = base64Data.ToDecodeURIComponent().ToImageUrl();
         }
-        var exension = Path.GetExtension(imgUrl);
-        var name = Path.GetFileNameWithoutExtension(imgUrl);
-        var contentType = new FileExtensionContentTypeProvider().TryGetContentType(exension, out var type) ? type : VARIABLES.APPLICATION_OCTET_STREAM;
-        var bytes = await response.Content.ReadAsByteArrayAsync();
-        if (bytes.Length == 0)
+        catch (FormatException)
         {
-            return NotFound();
+            return BadRequest();
         }
-        return File(bytes, contentType);
+
+        var result = await _imageProxy.GetAsync(imgUrl, HttpContext.RequestAborted);
+        switch (result.Status)
+        {
+            case ImageFetchStatus.Ok:
+                Response.Headers.CacheControl = "public, max-age=2592000";
+                return PhysicalFile(result.FilePath, result.ContentType);
+            case ImageFetchStatus.Timeout:
+                return StatusCode(StatusCodes.Status504GatewayTimeout);
+            case ImageFetchStatus.Busy:
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
+            case ImageFetchStatus.Failed:
+                return StatusCode(StatusCodes.Status502BadGateway);
+            default:
+                return NotFound();
+        }
     }
 
 }

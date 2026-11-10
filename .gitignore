@@ -7,5 +7,7 @@ obj
 logs/
 .config/
 *.user
-.db-shm
-.db-wal
+*.db-shm
+*.db-wal
+MvcNetCore8Samples/CommonWebAPI/wwwroot/image-cache/
+Logs/

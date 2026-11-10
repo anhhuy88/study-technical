@@ -13,6 +13,9 @@ public class FileCleanupOptions
     public int RetentionDays { get; set; } = 365;
 
     public int IntervalHours { get; set; } = 24;
+
+    // Cached proxied images not accessed/created for this many days are deleted.
+    public int ImageCacheRetentionDays { get; set; } = 30;
 }
 
 public class ExpiredFileCleanupService : BackgroundService
@@ -20,13 +23,16 @@ public class ExpiredFileCleanupService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ExpiredFileCleanupService> _logger;
     private readonly FileCleanupOptions _options;
+    private readonly string _imageCacheFolder;
 
     public ExpiredFileCleanupService(IServiceScopeFactory scopeFactory,
         ILogger<ExpiredFileCleanupService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ImageCacheOptions imageCacheOptions)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _imageCacheFolder = imageCacheOptions.Folder;
         _options = configuration.GetSection(FileCleanupOptions.SectionName).Get<FileCleanupOptions>() ?? new FileCleanupOptions();
     }
 
@@ -44,6 +50,7 @@ public class ExpiredFileCleanupService : BackgroundService
         do
         {
             await CleanupAsync(stoppingToken);
+            CleanupImageCache();
         }
         while (await WaitNextTickAsync(timer, stoppingToken));
     }
@@ -57,6 +64,45 @@ public class ExpiredFileCleanupService : BackgroundService
         catch (OperationCanceledException)
         {
             return false;
+        }
+    }
+
+    private void CleanupImageCache()
+    {
+        try
+        {
+            if (!Directory.Exists(_imageCacheFolder))
+            {
+                return;
+            }
+
+            var cutoff = DateTime.UtcNow.AddDays(-Math.Max(1, _options.ImageCacheRetentionDays));
+            var deleted = 0;
+            foreach (var path in Directory.EnumerateFiles(_imageCacheFolder))
+            {
+                try
+                {
+                    if (File.GetLastWriteTimeUtc(path) < cutoff)
+                    {
+                        File.Delete(path);
+                        deleted++;
+                    }
+                }
+                catch (IOException ex)
+                {
+                    // File may be in use by a request; retry on next run.
+                    _logger.LogDebug(ex, "Skip cache file {Path}", path);
+                }
+            }
+
+            if (deleted > 0)
+            {
+                _logger.LogInformation("Deleted {Count} cached images older than {Cutoff:u}.", deleted, cutoff);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Image cache cleanup failed.");
         }
     }
 
