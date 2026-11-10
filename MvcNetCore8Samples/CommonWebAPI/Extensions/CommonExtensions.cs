@@ -44,4 +44,9 @@ public static class CommonExtensions
         var bytes = Convert.FromBase64String(base64Data);
         return Encoding.GetEncoding("ISO-8859-1").GetString(bytes);
     }
+
+    public static string ToDecodeURIComponent(this string urlData)
+    {
+        return Uri.UnescapeDataString(urlData);
+    }
 }
