@@ -36,6 +36,7 @@ public class UploadService : IUploadService
             FileName = model.FileName,
             ContentType = contentType,
             Size = bytes.Length,
+            FileType = model.FileType,
             CreatedDate = DateTime.Now,
             Data = bytes
         };

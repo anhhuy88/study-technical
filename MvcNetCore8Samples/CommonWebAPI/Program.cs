@@ -22,6 +22,7 @@ builder.Services.AddHttpClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME);
 builder.Services.AddDbContext<AppDbContext>(opts => opts.UseSqlite($"Filename={dataFile}"));
 
 builder.Services.AddScoped<IUploadService, UploadService>();
+builder.Services.AddHostedService<ExpiredFileCleanupService>();
 
 builder.Services.AddCors(options =>
 {

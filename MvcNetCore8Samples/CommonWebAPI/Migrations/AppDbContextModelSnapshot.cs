@@ -37,6 +37,9 @@ namespace CommonWebAPI.Migrations
                     b.Property<string>("FileName")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("FileType")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("RowVersion")
                         .HasColumnType("INTEGER");
 

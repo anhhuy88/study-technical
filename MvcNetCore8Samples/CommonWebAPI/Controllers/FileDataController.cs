@@ -30,7 +30,7 @@ public class FileDataController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> UploadAsync()
+    public async Task<IActionResult> UploadAsync([FromQuery] FileType fileType = FileType.Normal)
     {
         if (!Request.HasFormContentType)
         {
@@ -72,6 +72,7 @@ public class FileDataController : ControllerBase
                 FileName = file.FileName,
                 ContentType = contentType,
                 Size = file.Length,
+                FileType = fileType,
                 CreatedDate = DateTime.Now
             };
 

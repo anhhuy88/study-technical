@@ -7,4 +7,5 @@ public class FileData : BaseEntity
     public byte[] Data { get; set; }
     public long Size { get; set; }
     public string Description { get; set; }
+    public FileType FileType { get; set; } = FileType.Normal;
 }

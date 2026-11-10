@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.StaticFiles;
+﻿using CommonWebAPI.Domain;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace CommonWebAPI.Models;
 public class FileDataModel
 {
     public string Base64Data { get; set; }
     public string FileName { get; set; }
+    public FileType FileType { get; set; } = FileType.Normal;
     public string ContentType
     {
         get
