@@ -1,6 +1,7 @@
 using CommonWebAPI.Domain;
 using CommonWebAPI.Extensions;
 using CommonWebAPI.Interfaces;
+using CommonWebAPI.Models;
 using CommonWebAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
@@ -8,6 +9,21 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
+// Resolve the configured log path against the content root so it does not depend on the working directory.
+const string LogPathKey = "Serilog:WriteTo:FileSink:Args:path";
+var logPath = Path.GetFullPath(configuration[LogPathKey] ?? "logs/log-.txt", builder.Environment.ContentRootPath);
+configuration[LogPathKey] = logPath;
+try
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"Cannot create log folder for '{logPath}': {ex.Message}");
+}
+Console.WriteLine($"Log path: {logPath}");
+// Serilog swallows sink errors (e.g. missing write permission) unless SelfLog is enabled.
+Serilog.Debugging.SelfLog.Enable(Console.Error);
 builder.Host.UseSerilog((context, services, loggerConfig) => loggerConfig
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services));
@@ -21,6 +37,8 @@ if (!Directory.Exists(dataFolder))
 var dataFile = Path.Combine(dataFolder, "appData.db"); // Directory.GetCurrentDirectory()
 
 builder.Services.AddHttpClient(VARIABLES.HTTP_CLIENT_NAME);
+builder.Services.AddHttpClient(VARIABLES.IMGBB_HTTP_CLIENT_NAME, client =>
+    client.Timeout = TimeSpan.FromSeconds(VARIABLES.IMGBB_TIMEOUT_SECONDS));
 builder.Services.AddHttpClient(VARIABLES.IMAGE_HTTP_CLIENT_NAME, client =>
 {
     // Must stay below the reverse proxy read timeout (nginx default 60s).
@@ -75,5 +93,3 @@ app.UseCors("AllowAll");
 app.MapControllers();
 
 await app.RunAsync();
-
-

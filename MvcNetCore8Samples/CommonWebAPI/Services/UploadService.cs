@@ -2,8 +2,9 @@
 using CommonWebAPI.Extensions;
 using CommonWebAPI.Interfaces;
 using CommonWebAPI.Models;
-using ImageMagick;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CommonWebAPI.Services;
 
@@ -25,71 +26,117 @@ public class UploadService : IUploadService
         _configuration = configuration;
     }
 
-    private async Task<string> SaveToDbAsync(FileDataModel model)
+    private async Task<string> TryUploadImgBBAsync(byte[] data, string fileName, CancellationToken cancellationToken)
     {
-        var contentType = model.ContentType;
-        byte[] bytes = model.ToImageBytes();
-
-        var fileData = new FileData
+        var imgBBKey = _configuration.GetValue<string>("ImgBBKEY");
+        if (string.IsNullOrWhiteSpace(imgBBKey))
         {
-            Id = Guid.NewGuid().ToString(),
-            FileName = model.FileName,
-            ContentType = contentType,
-            Size = bytes.Length,
-            FileType = model.FileType,
-            CreatedDate = DateTime.Now,
-            Data = bytes
-        };
+            _logger.LogWarning("ImgBB API key is not configured; saving image to the database.");
+            return null;
+        }
 
-        _dbContext.Set<FileData>().Add(fileData);
-
-        await _dbContext.SaveChangesAsync();
-
-        return fileData.Id;
-    }
-
-    private async Task<string> UploadImgBBAsync(FileDataModel model)
-    {
-        string result = null;
         try
         {
-            var imgBBKey = _configuration.GetValue<string>("ImgBBKEY");
-            var http = _httpFactory.CreateClient(VARIABLES.HTTP_CLIENT_NAME);
-            var base64ToBytes = Convert.FromBase64String(model.Base64Data);
+            var http = _httpFactory.CreateClient(VARIABLES.IMGBB_HTTP_CLIENT_NAME);
             using var form = new MultipartFormDataContent();
-            using var imageContent = new ByteArrayContent(base64ToBytes);
-            imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("multipart/form-data");
-            form.Add(imageContent, "image", model.FileName);
-            var res = await http.PostAsync($"https://api.imgbb.com/1/upload?key={imgBBKey}", form);
-            if (res.StatusCode == System.Net.HttpStatusCode.OK)
+            form.Add(new StringContent(imgBBKey), "key");
+            form.Add(new ByteArrayContent(data), "image", fileName);
+            using var res = await http.PostAsync(VARIABLES.IMGBB_UPLOAD_URL, form, cancellationToken);
+            if (!res.IsSuccessStatusCode)
             {
-                var resData = JsonConvert.DeserializeObject<dynamic>(await res.Content.ReadAsStringAsync());
-                result = resData.data.url;
+                _logger.LogWarning("ImgBB upload returned HTTP {StatusCode}; saving image to the database.", (int)res.StatusCode);
+                return null;
             }
-            else
+
+            var json = JObject.Parse(await res.Content.ReadAsStringAsync(cancellationToken));
+            var dataObject = json["data"] as JObject;
+            var url = dataObject?["url"]?.Type == JTokenType.String ? (string)dataObject["url"] : null;
+            if (!string.IsNullOrEmpty(url))
             {
-                _logger.LogError($"UploadImgBB: {res.StatusCode}. ${await res.Content.ReadAsStringAsync()}");
+                return url;
             }
+
+            _logger.LogWarning("ImgBB returned an invalid upload response; saving image to the database.");
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "UploadImgBB");
+            _logger.LogWarning(ex, "ImgBB upload failed; saving image to the database.");
+        }
+        catch (IOException ex)
+        {
+            _logger.LogWarning(ex, "ImgBB upload response could not be read; saving image to the database.");
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "ImgBB returned invalid JSON; saving image to the database.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("ImgBB upload timed out; saving image to the database.");
         }
 
-        return result;
+        return null;
     }
 
-    public async Task<string> SaveFileDataAsync(FileDataModel model)
+    public async Task<UploadResult> SaveFileDataAsync(FileDataModel model, CancellationToken cancellationToken)
     {
-        uint maxW = 1024;
-        uint maxH = 1024;
-        model.Base64Data = model.ToResizeBase64Image(maxW, maxH);
-        string result = await SaveToDbAsync(model);
-        //string result = await UploadImgBBAsync(model);
+        var original = Convert.FromBase64String(model.Base64Data);
+        var images = new[] { new ImageUpload(original, model.FileName, model.FileType) };
+        var results = await SaveImagesAsync(images, cancellationToken);
+        return results[0];
+    }
 
-        //if (string.IsNullOrEmpty(result))
-        //    result = await SaveToDbAsync(model);
+    public async Task<IReadOnlyList<UploadResult>> SaveImagesAsync(IReadOnlyList<ImageUpload> images, CancellationToken cancellationToken)
+    {
+        var prepared = new List<PreparedFileUpload>(images.Count);
+        foreach (var image in images)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var optimized = ImageOptimizer.Optimize(image.Data, image.FileName, image.FileType);
+            prepared.Add(new PreparedFileUpload(optimized, image.Data, image.FileType));
+        }
 
-        return result;
+        var results = new List<UploadResult>(prepared.Count);
+        var externalUploadCount = 0;
+        foreach (var item in prepared)
+        {
+            string url = null;
+            if (item.FileType != FileType.Logo)
+            {
+                url = await TryUploadImgBBAsync(item.OriginalData, item.Image.FileName, cancellationToken);
+            }
+
+            if (url != null)
+            {
+                externalUploadCount++;
+                results.Add(new UploadResult(url, true));
+                continue;
+            }
+
+            var file = new FileData
+            {
+                Id = Guid.NewGuid().ToString(),
+                FileName = item.Image.FileName,
+                ContentType = item.Image.ContentType,
+                Size = item.Image.Data.Length,
+                FileType = item.FileType,
+                CreatedDate = DateTime.Now,
+                Data = item.Image.Data
+            };
+            _dbContext.Set<FileData>().Add(file);
+            results.Add(new UploadResult(file.Id, false));
+        }
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database save failed after {ExternalUploadCount} external uploads.", externalUploadCount);
+            throw;
+        }
+
+        return results;
     }
 }

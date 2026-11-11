@@ -3,5 +3,6 @@
 namespace CommonWebAPI.Interfaces;
 public interface IUploadService
 {
-    Task<string> SaveFileDataAsync(FileDataModel model);
+    Task<UploadResult> SaveFileDataAsync(FileDataModel model, CancellationToken cancellationToken);
+    Task<IReadOnlyList<UploadResult>> SaveImagesAsync(IReadOnlyList<ImageUpload> images, CancellationToken cancellationToken);
 }

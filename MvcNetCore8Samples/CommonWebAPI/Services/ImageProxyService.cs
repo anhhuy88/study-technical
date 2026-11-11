@@ -1,31 +1,16 @@
 using System.Security.Cryptography;
 using System.Text;
 using CommonWebAPI.Extensions;
+using CommonWebAPI.Interfaces;
+using CommonWebAPI.Models;
 using Microsoft.AspNetCore.StaticFiles;
 
 namespace CommonWebAPI.Services;
 
-public enum ImageFetchStatus
-{
-    Ok,
-    NotFound,
-    Timeout,
-    Busy,
-    Failed
-}
-
-public record ImageFetchResult(ImageFetchStatus Status, string FilePath = null, string ContentType = null);
-
-public interface IImageProxyService
-{
-    Task<ImageFetchResult> GetAsync(string imgUrl, CancellationToken token);
-}
-
 public class ImageProxyService : IImageProxyService
 {
-    private const int MaxConcurrentDownloads = 4;
     private static readonly TimeSpan WaitSlotTimeout = TimeSpan.FromSeconds(10);
-    private static readonly SemaphoreSlim Slots = new(MaxConcurrentDownloads, MaxConcurrentDownloads);
+    private static readonly SemaphoreSlim Slots = new(VARIABLES.IMAGE_MAX_CONCURRENT_DOWNLOADS, VARIABLES.IMAGE_MAX_CONCURRENT_DOWNLOADS);
 
     private readonly IHttpClientFactory _httpFactory;
     private readonly ILogger<ImageProxyService> _logger;
@@ -116,5 +101,3 @@ public class ImageProxyService : IImageProxyService
             : ".img";
     }
 }
-
-public record ImageCacheOptions(string Folder);

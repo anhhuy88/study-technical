@@ -2,9 +2,7 @@
 using CommonWebAPI.Extensions;
 using CommonWebAPI.Interfaces;
 using CommonWebAPI.Models;
-using CommonWebAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.StaticFiles;
 
 namespace CommonWebAPI.Controllers;
 
@@ -38,11 +36,11 @@ public class FileDataController : ControllerBase
             return BadRequest();
         }
 
-        var form = await Request.ReadFormAsync();
+        var cancellationToken = HttpContext.RequestAborted;
+        var form = await Request.ReadFormAsync(cancellationToken);
         var files = form.Files;
-        var fileDataRes = _dbContext.Set<FileData>();
         var hostData = $"https://{Request.Host}";
-        var fileIds = new List<string>();
+        var images = new List<ImageUpload>();
 
         // check file max 2MB
         var maxFileSize = 2 * 1024 * 1024;
@@ -59,33 +57,25 @@ public class FileDataController : ControllerBase
             return BadRequest("File size is 0.");
         }
 
-        var provider = new FileExtensionContentTypeProvider();
-        string contentType;
         foreach (var file in files)
         {
-            if (!provider.TryGetContentType(file.FileName, out contentType))
-            {
-                contentType = "application/octet-stream";
-            }
-            var fileData = new FileData
-            {
-                Id = Guid.NewGuid().ToString(),
-                FileName = file.FileName,
-                ContentType = contentType,
-                Size = file.Length,
-                FileType = fileType,
-                CreatedDate = DateTime.Now
-            };
-
-            fileData.Data = await file.ToByteArrayAsync();
-
-            await fileDataRes.AddAsync(fileData);
-
-            fileIds.Add(fileData.Id);
+            images.Add(new ImageUpload(await file.ToByteArrayAsync(cancellationToken), file.FileName, fileType));
         }
 
-        await _dbContext.SaveChangesAsync();
-        var links = fileIds.Select(id => $"{hostData}/api/filedata/download/{id}").ToList();
+        IReadOnlyList<UploadResult> results;
+        try
+        {
+            results = await _uploadService.SaveImagesAsync(images, cancellationToken);
+        }
+        catch (InvalidDataException ex)
+        {
+            _logger.LogWarning(ex, "Invalid image upload.");
+            return BadRequest(ex.Message);
+        }
+
+        var links = results.Select(result => result.IsExternal
+            ? result.Value
+            : $"{hostData}/api/filedata/download/{result.Value}").ToList();
         return Ok(links);
     }
 
@@ -105,9 +95,29 @@ public class FileDataController : ControllerBase
     [HttpPost("upload2")]
     public async Task<IActionResult> Upload2Async([FromBody] FileDataModel model)
     {
-        var linkUrl = await _uploadService.SaveFileDataAsync(model);
+        if (model == null || string.IsNullOrWhiteSpace(model.FileName) || string.IsNullOrWhiteSpace(model.Base64Data))
+        {
+            return BadRequest("File name and Base64 image data are required.");
+        }
 
-        if (!linkUrl.StartsWith("http"))
+        UploadResult uploadResult;
+        try
+        {
+            uploadResult = await _uploadService.SaveFileDataAsync(model, HttpContext.RequestAborted);
+        }
+        catch (FormatException ex)
+        {
+            _logger.LogWarning(ex, "Invalid Base64 image upload.");
+            return BadRequest("Invalid Base64 image data.");
+        }
+        catch (InvalidDataException ex)
+        {
+            _logger.LogWarning(ex, "Invalid image upload.");
+            return BadRequest(ex.Message);
+        }
+
+        var linkUrl = uploadResult.Value;
+        if (!uploadResult.IsExternal)
         {
             var hostData = $"https://{Request.Host}";
             linkUrl = $"{hostData}/api/filedata/download/{linkUrl}";

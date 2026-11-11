@@ -30,5 +30,6 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
     <Content Update="Logs\**" CopyToPublishDirectory="Never" />
+    <Content Update="logs\**" CopyToPublishDirectory="Never" />
   </ItemGroup>
 </Project>

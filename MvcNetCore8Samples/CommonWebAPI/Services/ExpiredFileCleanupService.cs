@@ -1,22 +1,9 @@
 using CommonWebAPI.Domain;
+using CommonWebAPI.Extensions;
+using CommonWebAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CommonWebAPI.Services;
-
-public class FileCleanupOptions
-{
-    public const string SectionName = "FileCleanup";
-
-    public bool Enabled { get; set; } = true;
-
-    // Files older than this number of days are deleted.
-    public int RetentionDays { get; set; } = 365;
-
-    public int IntervalHours { get; set; } = 24;
-
-    // Cached proxied images not accessed/created for this many days are deleted.
-    public int ImageCacheRetentionDays { get; set; } = 30;
-}
 
 public class ExpiredFileCleanupService : BackgroundService
 {
@@ -33,7 +20,7 @@ public class ExpiredFileCleanupService : BackgroundService
         _scopeFactory = scopeFactory;
         _logger = logger;
         _imageCacheFolder = imageCacheOptions.Folder;
-        _options = configuration.GetSection(FileCleanupOptions.SectionName).Get<FileCleanupOptions>() ?? new FileCleanupOptions();
+        _options = configuration.GetSection(VARIABLES.FILE_CLEANUP_SECTION_NAME).Get<FileCleanupOptions>() ?? new FileCleanupOptions();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,25 +32,33 @@ public class ExpiredFileCleanupService : BackgroundService
         }
 
         var interval = TimeSpan.FromHours(Math.Max(1, _options.IntervalHours));
-        using var timer = new PeriodicTimer(interval);
+        DateTimeOffset? nextRun = null;
+        _logger.LogInformation("File cleanup starts only between 22:00 and 03:00 server local time, with an interval of {Interval}.", interval);
 
-        do
+        while (!stoppingToken.IsCancellationRequested)
         {
+            var now = DateTimeOffset.UtcNow;
+            var delay = CleanupSchedule.GetDelay(DateTime.Now, now, nextRun);
+            if (delay > TimeSpan.Zero)
+            {
+                try
+                {
+                    await Task.Delay(delay, stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                continue;
+            }
+
+            nextRun = now.Add(interval);
             await CleanupAsync(stoppingToken);
+            if (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
             CleanupImageCache();
-        }
-        while (await WaitNextTickAsync(timer, stoppingToken));
-    }
-
-    private static async Task<bool> WaitNextTickAsync(PeriodicTimer timer, CancellationToken token)
-    {
-        try
-        {
-            return await timer.WaitForNextTickAsync(token);
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
         }
     }
 
